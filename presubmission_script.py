@@ -32,22 +32,35 @@ def find_mistake_and_print_input(school_out_p, students_solution, instructions_p
     #temp_test_name = os.path.join(test_dir, 'NumericalAnalyzer.c')
     #print(test_input)
     test_input = ''.join(load_data(instructions_p))
-    school_lines = [l[:-1] for l in load_data(school_out_p)]
-    school_out, school_return_code = FACTOR_DATA(school_lines)
-
-    if ('Assertion' in school_out):
-        os.system("cp -afr " + os.path.join(path,'IntegerFactorization_ORIGINAL') + ' ' + os.path.join(path,'IntegerFactorization'))
-
-    else:
-        os.system("cp -afr " + os.path.join(path,'IntegerFactorization_SCHOOL') + ' ' + os.path.join(path,'IntegerFactorization'))
-
-    C_SCHOOL_SOLUTION = os.path.join(path, 'IntegerFactorization')
-    student_out, student_err, p = run_test_get_result(C_SCHOOL_SOLUTION, '#', instructions_p)
-    student_out, student_return_code = (student_out.strip() + student_err.strip()).split('\n'), p
-    student_out = [l for l in student_out if l]
+    #school_lines = [l[:-1] for l in load_data(school_out_p)]
+    #school_out, school_return_code = FACTOR_DATA(school_lines)
 
 
-    if 'Assertion' in school_out:
+    C_SCHOOL_SOLUTION = os.path.join(path, 'FractalDrawerSchool')
+    C_STUDENT_SOLUTION = os.path.join(path, 'FractalDrawerStudent')
+
+    # out, err, p = run_test_get_result(C_SCHOOL_SOLUTION, test_path, '000','argument')
+
+    student_out, student_err, st_p = run_test_get_result(C_SCHOOL_SOLUTION, school_out_p, '000','argument')
+    school_out, school_err, sc_p = run_test_get_result(C_STUDENT_SOLUTION, school_out_p, '000','argument')
+
+    student_out, student_err, st_p=student_out.split('\n'), student_err.split('\n'), st_p
+    school_out, school_err, sc_p=school_out.split('\n'), school_err.split('\n'), sc_p
+    #
+    # #student_return_code = (student_out.strip() + student_err.strip()).split('\n'), p
+    # if ('Assertion' in school_out):
+    #     os.system("cp -afr " + os.path.join(path,'IntegerFactorization_ORIGINAL') + ' ' + os.path.join(path,'IntegerFactorization'))
+    #
+    # else:
+    #     os.system("cp -afr " + os.path.join(path,'IntegerFactorization_SCHOOL') + ' ' + os.path.join(path,'IntegerFactorization'))
+    #
+    # C_SCHOOL_SOLUTION = os.path.join(path, 'IntegerFactorization')
+    # student_out, student_err, p = run_test_get_result(C_SCHOOL_SOLUTION, '#', instructions_p)
+    # student_out, student_return_code = (student_out.strip() + student_err.strip()).split('\n'), p
+    # student_out = [l for l in student_out if l]
+
+
+    if any(['Assertion' in l for l in school_out]):
         if student_out:
             if not ('Assertion' in student_out[0]):
                 print("  >> >> ERROR: You (probably) got wrong in following test: Assertion  << <<  ")
@@ -60,37 +73,37 @@ def find_mistake_and_print_input(school_out_p, students_solution, instructions_p
             return_values_error += 1
             res += 1
     else:
-        if (school_return_code != student_return_code):
+        if (sc_p != st_p):
             print("  >> >> ERROR: You (probably) got wrong in following test, returncode:  << <<  ")
-            print_error(test_input, school_return_code, student_return_code)
+            print_error(test_input, sc_p, st_p)
             return_values_error = 1
+
         if len(school_out) != len(student_out):
             print("  >> >> ERROR: You (probably) got wrong in following test, number of lines:  << <<  ")
             print_error(test_input, str(len(school_out)), str(len(student_out)))
             res += 1
 
-        for i, (row_school, row_student) in enumerate(zip(school_out[-2:], student_out[-2:])):
-            try:
-                arr1 = row_school.split('=')[1].split('*')
-                arr2 = row_student.split('=')[1].split('*')
-                arr1.sort()
-                arr2.sort()
-            except:
-                arr1=''
-                arr2='^'
-            if not arr1==arr2:
-                print("  >> >> ERROR: You (probably) got wrong in following test, line: " + str(len(student_out[:-2])+i+1) + " : << <<  ")
-                print_error(test_input, row_school, row_student)
-                return_values_error += 1
-                res = 1
-                break
+        # for i, (row_school, row_student) in enumerate(zip(school_out[-2:], student_out[-2:])):
+        #     try:
+        #         arr1 = row_school.split('=')[1].split('*')
+        #         arr2 = row_student.split('=')[1].split('*')
+        #         arr1.sort()
+        #         arr2.sort()
+        #     except:
+        #         arr1=''
+        #         arr2='^'
+        #     if not arr1==arr2:
+        #         print("  >> >> ERROR: You (probably) got wrong in following test, line: " + str(len(student_out[:-2])+i+1) + " : << <<  ")
+        #         print_error(test_input, row_school, row_student)
+        #         return_values_error += 1
+        #         res = 1
+        #         break
 
-        for i, (row_school, row_student) in enumerate(zip(school_out[:-2], student_out[:-2])):
+        for i, (row_school, row_student) in enumerate(zip(school_out, student_out)):
             if (row_school.strip() != row_student.strip()):
                 print("  >> >> ERROR: You (probably) got wrong in following test, line: " + str(i) + " : << <<  ")
                 print_error(test_input, row_school, row_student)
-                res = 1
-                break
+                res += 1
 
         # for i , (row_school, row_student) in enumerate(zip(school_out[:-2], student_out[:-2])):
         #     row_school, row_student = PROCESS_LINE(row_school), PROCESS_LINE(row_student)
@@ -112,7 +125,7 @@ def find_mistake_and_print_input(school_out_p, students_solution, instructions_p
 
 
     if memmory_leaks:
-        student_out, student_err, p = run_test_get_result('valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose '+C_SCHOOL_SOLUTION, '#', instructions_p)
+        student_out, student_err, p = run_test_get_result('valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose '+C_STUDENT_SOLUTION, school_out_p, '000','argument')
         if 'All heap blocks were freed -- no leaks are possible' in student_err:
             memmory_leak = 0
         else:
@@ -332,29 +345,24 @@ if __name__ == '__main__':
             if not compile_err:
                 os.system('cd ' + path + '; make clean;')
                 os.system('cd ' + path + '; make;')
-                os.system("cp -afr " + os.path.join(path, 'IntegerFactorization') + ' ' + os.path.join(path,'IntegerFactorization_ORIGINAL'))
+                os.system("cp -afr " + os.path.join(path, 'FractalDrawer') + ' ' + os.path.join(path,'FractalDrawerStudent'))
+                os.system('cd ' + path + '; make clean;')
 
                 if (os.path.dirname(
                         os.path.abspath(__file__)) == '/cs/usr/mick.kab/Documents/C_C++/' + EX + '/final_submission') or \
                         (os.path.dirname(
                             os.path.abspath(__file__)) == '/cs/usr/mick.kab/Documents/C_C++/' + EX + '/presubmission'):
                     os.system(
-                        "cp -afr " + '/cs/usr/mick.kab/Documents/C_C++/' + EX + '/submission/IntegerFactorization.cpp' + ' ' + os.path.join(
-                            path, 'IntegerFactorization.cpp'))
-                    os.system('cd ' + path + '; make clean;')
-                    os.system('cd ' + path + '; make;')
+                        "cp -afr " + '/cs/usr/mick.kab/Documents/C_C++/' + EX + '/submission/FractalDrawerSchool' + ' ' + os.path.join(
+                            path, 'FractalDrawerSchool'))
                 else:
                     os.system(
-                        "cp -afr " + 'IntegerFactorization.cpp' + ' ' + os.path.join(
-                            path, 'IntegerFactorization.cpp'))
-                os.system('cd ' + path + '; make clean;')
-                os.system('cd ' + path + '; make;')
-                os.system("cp -afr " + os.path.join(path, 'IntegerFactorization') + ' ' + os.path.join(path,'IntegerFactorization_SCHOOL'))
-
+                        "cp -afr " + 'FractalDrawerSchool' + ' ' + os.path.join(
+                            path, 'FractalDrawerSchool'))
 
                 tests_dir = 'tests'
                 special_solution = ''
-                os.system("cp -afr " + 'Makefile' + ' ' + path)  ##
+                # os.system("cp -afr " + 'Makefile' + ' ' + path)  ##
 
                 for test_type in os.listdir(tests_dir):
                     test_dir = os.path.join(tests_dir, test_type)
